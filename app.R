@@ -1,44 +1,59 @@
-if(!require(pacman))
-  install.packages("pacman")
-pacman::p_load("shiny", "gtExtras", "tidyverse", "lubridate", "readxl", "ggplot2", "sf", "gt", "here", "colorspace", "patchwork", "scales", "ggspatial", "mapview", "glue")
+library(shiny)
+library(tidyverse)
+library(ggplot2)
+library(shinythemes)
+library(vroom)
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
+Categories <- c("NumberOfPaidItems", "PaidQuantity", "BNFItemCode", "BNFItemDescription", "PaidDateMonth", "GrossIngredientCost", "ClassOfPreparationCode")
 
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
-    )
+ui <- fluidPage(theme = shinytheme("cyborg"),
+  sidebarPanel(
+    selectizeInput(
+      "select_hb",
+      "HB",
+      choices = (unique(CompleteDataset$HBName)),
+      multiple = FALSE
+    ),
+    uiOutput("select_gp"),
+    selectInput(
+      inputId = "x_attribute",
+      label   = "Select attribute for x axis",
+      choices = Categories
+    ),
+    selectInput(
+      inputId  = "y_attribute",
+      label    = "Select attribute for y axis",
+      choices  = Categories,
+      selected = Categories[2]
+    )),
+  mainPanel(plotOutput("ggplotPlot"))
 )
 
-# Define server logic required to draw a histogram
-server <- function(input, output) {
+server <- function(input, output, session) {
+  # render the child dropdown menu
+  output$select_gp <- renderUI({
+    dat <- CompleteDataset %>%
+      filter(HBName %in% input$select_hb)
 
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    # get available carb values
+    gp <- sort(unique(dat$GPPracticeName))
 
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
-    })
+    # render selectizeInput
+    selectizeInput("select_gp",
+                   "GP",
+                   choices = c(gp),
+                   multiple = FALSE)
+  })
+
+  output$ggplotPlot <- renderPlot({
+    CompleteDataset %>%
+      filter(HBName == input$select_hb,
+             GPPracticeName %in% input$select_gp) %>%
+      ggplot(aes(x = .data[[input$x_attribute]],
+                 y = .data[[input$y_attribute]])) +
+      geom_point() +
+      theme_minimal()
+  })
 }
 
-# Run the application
-shinyApp(ui = ui, server = server)
+shinyApp(ui, server)
