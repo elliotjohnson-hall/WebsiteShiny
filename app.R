@@ -7,7 +7,9 @@ library(here)
 
 Categories <- c("NumberOfPaidItems", "PaidQuantity", "BNFItemCode", "BNFItemDescription", "PaidDateMonth", "GrossIngredientCost", "ClassOfPreparationCode")
 
-if (exists("CompleteDataset") == FALSE) {
+if (file.exists(here("Data", "Data.RDS")) == TRUE) {
+  CompleteDataset <- read_rds(here("Data", "Data.RDS"))
+} else {
   source(here("Scripts", "CKAN.R"))
 }
 
