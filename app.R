@@ -3,8 +3,13 @@ library(tidyverse)
 library(ggplot2)
 library(shinythemes)
 library(vroom)
+library(here)
 
 Categories <- c("NumberOfPaidItems", "PaidQuantity", "BNFItemCode", "BNFItemDescription", "PaidDateMonth", "GrossIngredientCost", "ClassOfPreparationCode")
+
+if (exists("CompleteDataset") == FALSE) {
+  source(here("Scripts", "CKAN.R"))
+}
 
 ui <- fluidPage(theme = shinytheme("cyborg"),
   sidebarPanel(

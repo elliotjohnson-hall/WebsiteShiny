@@ -2,8 +2,6 @@ library(tidyverse)
 library(vroom)
 library(here)
 
-CompleteDataset <- readRDS(here("Data", "Data.RDS"))
-
 CompleteDataset <- CompleteDataset %>%
   mutate(HealthBoard = case_when(is.na(HBT) ~ HBT2014,!is.na(HBT) ~ HBT)) %>%
   select(-c(`_id`, `_full_text`, HBT2014, HBT))
@@ -17,3 +15,14 @@ GPPractices <- vroom("https://www.opendata.nhs.scot/dataset/f23655c3-6e23-4103-a
 
 CompleteDataset <- left_join(CompleteDataset, HealthBoards)
 CompleteDataset <- left_join(CompleteDataset, GPPractices)
+
+remove(list = c("GPPractices", "HealthBoards", "DataList", "DataFrameList", "ResourceIDs", "BaseURL", "ChoiceToUpdate", "NumberOfRecordsFound", "NumberOfRecordsRetrieved", "Record", "SQL", "ResourceID", "TempResult"))
+
+if (dir.exists(here("Data")) == TRUE) {
+  unlink(here("Data"), recursive = TRUE)
+  dir.create(here("Data"))
+  write_rds(CompleteDataset, file = here("Data", "Data.RDS"))
+} else {
+  dir.create(here("Data"))
+  write_rds(CompleteDataset, file = here("Data", "Data.RDS"))
+}
